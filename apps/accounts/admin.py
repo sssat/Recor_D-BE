@@ -8,7 +8,7 @@ class UserAdmin(BaseUserAdmin):
     list_display = ('email', 'name', 'is_staff', 'date_joined')
     ordering = ('-date_joined',)
     fieldsets = BaseUserAdmin.fieldsets + (
-        ('추가 정보', {'fields': ('name', 'profile_image')}),
+        ('추가 정보', {'fields': ('name',)}),
     )
 
 

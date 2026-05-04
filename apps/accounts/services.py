@@ -18,7 +18,6 @@ def kakao_login(code: str, redirect_uri: str = '') -> tuple[User, bool]:
         social_id=social_id,
         email=email,
         name=profile.get('nickname', ''),
-        profile_image=profile.get('profile_image_url', ''),
     )
 
 
@@ -48,20 +47,24 @@ def _get_user_info(access_token: str) -> dict:
 
 
 def _get_or_create_user(
-    social_id: str, email: str, name: str, profile_image: str
+    social_id: str, email: str, name: str
 ) -> tuple[User, bool]:
     with transaction.atomic():
         try:
             social = SocialAccount.objects.select_related('user').get(
                 provider='kakao', social_id=social_id
             )
-            return social.user, False
+            user = social.user
+            if name and user.name != name:
+                user.name = name
+                user.save(update_fields=['name'])
+            return user, False
         except SocialAccount.DoesNotExist:
             pass
 
         user, created = User.objects.get_or_create(
             email=email,
-            defaults={'username': email, 'name': name, 'profile_image': profile_image},
+            defaults={'username': email, 'name': name},
         )
         SocialAccount.objects.get_or_create(
             provider='kakao',
