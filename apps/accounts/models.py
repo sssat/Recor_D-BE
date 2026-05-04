@@ -6,7 +6,7 @@ from common.models import TimeStampedModel
 class User(AbstractUser):
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=100, blank=True)
-    profile_image = models.URLField(blank=True)
+
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username']

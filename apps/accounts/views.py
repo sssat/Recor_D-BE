@@ -83,7 +83,7 @@ class ProfileView(APIView):
     @extend_schema(
         tags=['Auth'],
         summary='내 프로필 수정',
-        description='`name`, `profile_image` 수정 가능.',
+        description='`name` 수정 가능.',
         request=UserSerializer,
         responses={200: UserSerializer},
     )
