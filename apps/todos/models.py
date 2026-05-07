@@ -11,7 +11,7 @@ class Todo(TimeStampedModel):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='todos'
     )
     project = models.ForeignKey(
-        'projects.Project', on_delete=models.CASCADE,
+        'projects.Project', on_delete=models.SET_NULL,
         related_name='todos', null=True, blank=True,
     )
     title = models.CharField(max_length=300)
