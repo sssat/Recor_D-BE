@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.db import transaction
 from apps.accounts.serializers import UserSerializer
 from .models import Project, ProjectMember
+from .services import create_project, sync_related_items
 
 
 class ProjectMemberSerializer(serializers.ModelSerializer):
@@ -67,39 +68,12 @@ class ProjectSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
         user = self.context['request'].user
-        project = Project.objects.create(owner=user, **validated_data)
-        ProjectMember.objects.create(project=project, user=user, role='owner')
-        self._sync_related(project)
+        project = create_project(validated_data, user)
+        sync_related_items(project, user, self.context['request'].data)
         return project
 
     @transaction.atomic
     def update(self, instance, validated_data):
         project = super().update(instance, validated_data)
-        self._sync_related(project)
+        sync_related_items(project, self.context['request'].user, self.context['request'].data)
         return project
-
-    def _sync_related(self, project):
-        from apps.meetings.models import Meeting
-        from apps.todos.models import Todo
-        from apps.schedules.models import Schedule
-
-        user = self.context['request'].user
-        data = self.context['request'].data
-
-        if 'meetingIds' in data:
-            Meeting.objects.filter(project=project, created_by=user).update(project=None)
-            ids = data.get('meetingIds') or []
-            if ids:
-                Meeting.objects.filter(created_by=user, id__in=ids).update(project=project)
-
-        if 'todoIds' in data:
-            Todo.objects.filter(project=project, user=user).update(project=None)
-            ids = data.get('todoIds') or []
-            if ids:
-                Todo.objects.filter(user=user, id__in=ids).update(project=project)
-
-        if 'scheduleIds' in data:
-            Schedule.objects.filter(project=project, user=user).update(project=None)
-            ids = data.get('scheduleIds') or []
-            if ids:
-                Schedule.objects.filter(user=user, id__in=ids).update(project=project)
