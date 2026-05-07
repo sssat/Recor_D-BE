@@ -5,17 +5,17 @@ from common.models import TimeStampedModel
 
 class Project(TimeStampedModel):
     STATUS_CHOICES = [
-        ('진행중', '진행중'),
-        ('완료', '완료'),
-        ('중단', '중단'),
+        ('inProgress', '진행중'),
+        ('completed', '완료'),
+        ('planning', '준비중'),
     ]
     COLOR_CHOICES = [
-        ('primary', 'primary'),
-        ('accent', 'accent'),
-        ('secondary', 'secondary'),
-        ('success', 'success'),
-        ('warning', 'warning'),
-        ('destructive', 'destructive'),
+        ('green', 'green'),
+        ('blue', 'blue'),
+        ('teal', 'teal'),
+        ('yellow', 'yellow'),
+        ('brightGreen', 'brightGreen'),
+        ('red', 'red'),
     ]
 
     name = models.CharField(max_length=200)
@@ -25,9 +25,9 @@ class Project(TimeStampedModel):
     )
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
-    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='진행중')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='inProgress')
     tags = models.JSONField(default=list)
-    color = models.CharField(max_length=20, choices=COLOR_CHOICES, default='primary')
+    color = models.CharField(max_length=20, choices=COLOR_CHOICES, default='green')
 
     def __str__(self):
         return self.name

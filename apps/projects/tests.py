@@ -29,13 +29,18 @@ class TestProject:
         resp = client.post(reverse('project-list'), {
             'name': 'New Project',
             'description': 'desc',
-            'status': '진행중',
+            'status': 'inProgress',
             'tags': ['React', 'Python'],
-            'color': 'primary',
+            'colorKey': 'green',
         }, format='json')
         assert resp.status_code == 201
-        assert resp.data['status'] == '진행중'
-        assert resp.data['color'] == 'primary'
+        assert resp.data['status'] == 'inProgress'
+        assert resp.data['colorKey'] == 'green'
+        assert resp.data['meetingIds'] == []
+        assert resp.data['todoIds'] == []
+        assert resp.data['scheduleIds'] == []
+        assert 'startDate' in resp.data
+        assert 'endDate' in resp.data
 
     def test_list_only_my_projects(self, client, user, project):
         other = User.objects.create_user(email='other@test.com', username='other@test.com', password='pass')
