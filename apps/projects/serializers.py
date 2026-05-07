@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from django.db import transaction
 from apps.accounts.serializers import UserSerializer
 from .models import Project, ProjectMember
 
@@ -63,6 +64,7 @@ class ProjectSerializer(serializers.ModelSerializer):
     def get_scheduleIds(self, obj):
         return [s.id for s in obj.schedules.all()]
 
+    @transaction.atomic
     def create(self, validated_data):
         user = self.context['request'].user
         project = Project.objects.create(owner=user, **validated_data)
@@ -70,6 +72,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         self._sync_related(project)
         return project
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         project = super().update(instance, validated_data)
         self._sync_related(project)
