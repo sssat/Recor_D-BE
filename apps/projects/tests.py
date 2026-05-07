@@ -2,6 +2,8 @@ import pytest
 from django.urls import reverse
 from rest_framework.test import APIClient
 from apps.accounts.models import User
+from apps.todos.models import Todo
+from apps.schedules.models import Schedule
 from .models import Project, ProjectMember
 
 
@@ -88,6 +90,21 @@ class TestProject:
         resp = client.delete(reverse('project-detail', args=[project.id]))
         assert resp.status_code == 204
         assert not Project.objects.filter(id=project.id).exists()
+
+    def test_delete_project_unlinks_todos_and_schedules(self, client, user, project):
+        todo = Todo.objects.create(user=user, project=project, title='할일')
+        schedule = Schedule.objects.create(
+            user=user, project=project, title='일정',
+            start_datetime='2026-05-01T10:00:00Z',
+            end_datetime='2026-05-01T11:00:00Z',
+        )
+        client.force_authenticate(user=user)
+        client.delete(reverse('project-detail', args=[project.id]))
+
+        todo.refresh_from_db()
+        schedule.refresh_from_db()
+        assert todo.project is None
+        assert schedule.project is None
 
     def test_unauthenticated_cannot_access(self, client):
         resp = client.get(reverse('project-list'))

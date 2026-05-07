@@ -15,7 +15,7 @@ class Schedule(TimeStampedModel):
         settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='schedules'
     )
     project = models.ForeignKey(
-        'projects.Project', on_delete=models.CASCADE,
+        'projects.Project', on_delete=models.SET_NULL,
         related_name='schedules', null=True, blank=True,
     )
     title = models.CharField(max_length=300)
