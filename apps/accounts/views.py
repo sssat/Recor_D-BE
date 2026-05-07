@@ -63,7 +63,10 @@ class LogoutView(APIView):
             name='LogoutRequest',
             fields={'refresh': serializers.CharField(help_text='리프레시 토큰')},
         ),
-        responses={204: OpenApiResponse(description='로그아웃 성공')},
+        responses={
+            204: OpenApiResponse(description='로그아웃 성공'),
+            400: OpenApiResponse(description='리프레시 토큰 누락 또는 유효하지 않음'),
+        },
     )
     def post(self, request):
         refresh_token = request.data.get('refresh')
