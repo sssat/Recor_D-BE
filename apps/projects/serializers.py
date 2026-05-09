@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.db import transaction
+from drf_spectacular.utils import extend_schema_field
 from apps.accounts.serializers import UserSerializer
 from .models import Project, ProjectMember
 from .services import create_project, sync_related_items
@@ -40,15 +41,19 @@ class ProjectSerializer(serializers.ModelSerializer):
         )
         read_only_fields = ('id', 'owner', 'createdAt')
 
+    @extend_schema_field(serializers.IntegerField())
     def get_meetingCount(self, obj):
         return len(obj.meetings.all())
 
+    @extend_schema_field(serializers.IntegerField())
     def get_todoCount(self, obj):
         return len(obj.todos.all())
 
+    @extend_schema_field(serializers.IntegerField())
     def get_completedTodoCount(self, obj):
         return sum(1 for t in obj.todos.all() if t.status == 'done')
 
+    @extend_schema_field(serializers.IntegerField())
     def get_progress(self, obj):
         todos = obj.todos.all()
         total = len(todos)
@@ -56,12 +61,15 @@ class ProjectSerializer(serializers.ModelSerializer):
             return 0
         return round(sum(1 for t in todos if t.status == 'done') / total * 100)
 
+    @extend_schema_field(serializers.ListField(child=serializers.IntegerField()))
     def get_meetingIds(self, obj):
         return [m.id for m in obj.meetings.all()]
 
+    @extend_schema_field(serializers.ListField(child=serializers.IntegerField()))
     def get_todoIds(self, obj):
         return [t.id for t in obj.todos.all()]
 
+    @extend_schema_field(serializers.ListField(child=serializers.IntegerField()))
     def get_scheduleIds(self, obj):
         return [s.id for s in obj.schedules.all()]
 
