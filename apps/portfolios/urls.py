@@ -1,11 +1,12 @@
 from django.urls import path
 from .views import (
-    PortfolioListCreateView, PortfolioDetailView,
+    PortfolioGenerateView, PortfolioListCreateView, PortfolioDetailView,
     StarEntryListCreateView, StarEntryDetailView, StarEntrySummarizeView,
 )
 
 urlpatterns = [
     path('', PortfolioListCreateView.as_view(), name='portfolio-list'),
+    path('generate/', PortfolioGenerateView.as_view(), name='portfolio-generate'),
     path('<int:pk>/', PortfolioDetailView.as_view(), name='portfolio-detail'),
     path('<int:portfolio_id>/star/', StarEntryListCreateView.as_view(), name='star-list'),
     path('<int:portfolio_id>/star/<int:pk>/', StarEntryDetailView.as_view(), name='star-detail'),

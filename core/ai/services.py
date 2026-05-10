@@ -1,6 +1,6 @@
 from django.conf import settings
 from .client import get_model, get_openai_client
-from .prompts import MEETING_SUMMARY_PROMPT, STAR_SUMMARY_PROMPT
+from .prompts import MEETING_SUMMARY_PROMPT, STAR_PORTFOLIO_PROMPT, STAR_SUMMARY_PROMPT
 
 
 def summarize_meeting_note(content: str) -> str:
@@ -30,4 +30,10 @@ def generate_star_summary(situation: str, task: str, action: str, result: str) -
             result=result,
         )
     )
+    return response.text
+
+
+def generate_star_portfolio_draft(content: str) -> str:
+    model = get_model()
+    response = model.generate_content(STAR_PORTFOLIO_PROMPT.format(content=content))
     return response.text
