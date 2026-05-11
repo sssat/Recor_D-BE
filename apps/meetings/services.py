@@ -1,6 +1,8 @@
 from django.utils import timezone
+
 from core.ai.services import summarize_meeting_note, transcribe_audio_file
 from .models import Meeting
+
 
 MAX_AUDIO_FILE_SIZE = 25 * 1024 * 1024
 SUPPORTED_AUDIO_EXTENSIONS = {'mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm'}
@@ -35,14 +37,14 @@ def _parse_summary_sections(summary_text):
         line = raw_line.strip()
         if not line:
             continue
-        if '주요 결정' in line or '핵심' in line:
+        if '주요 결정' in line or '핵심' in line or '중요' in line:
             current_section = 'key_points'
             continue
-        if '액션' in line or '할 일' in line:
+        if '액션' in line or '할 일' in line or '해야 할' in line:
             current_section = 'action_items'
             continue
         if line.startswith(('-', '*', '•')):
-            item = line.lstrip('-*• ').strip()
+            item = line.lstrip('-*•').strip()
             if current_section == 'action_items':
                 action_items.append(item)
             elif current_section == 'key_points':

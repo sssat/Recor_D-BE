@@ -3,6 +3,7 @@ from django.urls import reverse
 from unittest.mock import patch
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APIClient
+
 from apps.accounts.models import User
 from apps.projects.models import Project
 from .models import Meeting
@@ -68,7 +69,7 @@ class TestMeetingSummarize:
             'title': 'API 명세 점검',
             'date': '2026-05-02',
             'durationMinutes': 40,
-            'participants': ['김철수', '박민수'],
+            'participants': ['김철수', '박정연'],
             'summary': '회의록 API 요청과 응답 필드를 정리했습니다.',
             'tags': ['API', '회의록'],
             'transcript': '회의 내용입니다.',
@@ -111,7 +112,7 @@ class TestMeetingSummarize:
             content_type='audio/mpeg',
         )
 
-        with patch('apps.meetings.services.transcribe_audio_file', return_value='회의 전사 내용입니다.'), \
+        with patch('apps.meetings.services.transcribe_audio_file', return_value='회의 원문 내용입니다.'), \
              patch(
                  'apps.meetings.services.summarize_meeting_note',
                  return_value='**주요 결정 사항**\n- API를 연동한다\n\n**액션 아이템**\n- STT 테스트를 작성한다',
@@ -124,7 +125,7 @@ class TestMeetingSummarize:
         assert resp.status_code == 200
         assert resp.data['project'] == '포트폴리오 관리 시스템'
         assert resp.data['title'] == 'planning 회의'
-        assert resp.data['transcript'] == '회의 전사 내용입니다.'
+        assert resp.data['transcript'] == '회의 원문 내용입니다.'
         assert resp.data['summary'].startswith('**주요 결정 사항**')
         assert resp.data['keyPoints'] == ['API를 연동한다']
         assert resp.data['actionItems'] == ['STT 테스트를 작성한다']
