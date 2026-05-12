@@ -61,7 +61,7 @@ class TestMeetingSummarize:
         assert resp.data['durationMinutes'] == 45
 
     def test_create_meeting_with_frontend_payload(self, client, user):
-        project = Project.objects.create(name='포트폴리오 관리 시스템', owner=user)
+        project = Project.objects.create(name='포트폴리오 관리 시스템', user=user)
         client.force_authenticate(user=user)
 
         resp = client.post(reverse('meeting-list'), {
@@ -90,7 +90,7 @@ class TestMeetingSummarize:
         assert resp.data['sourceType'] == 'manual'
 
     def test_get_meeting_projects(self, client, user):
-        project = Project.objects.create(name='캡스톤 디자인', owner=user)
+        project = Project.objects.create(name='캡스톤 디자인', user=user)
         Meeting.objects.create(
             project=project,
             title='프로젝트 회의',

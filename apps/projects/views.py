@@ -32,7 +32,7 @@ class ProjectListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         return Project.objects.filter(
-            owner=self.request.user
+            user=self.request.user
         ).prefetch_related('meetings', 'todos', 'schedules').order_by('-created_at')
 
 
@@ -78,5 +78,5 @@ class ProjectDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Project.objects.filter(
-            owner=self.request.user
+            user=self.request.user
         ).prefetch_related('meetings', 'todos', 'schedules')

@@ -24,7 +24,7 @@ def other_user(db):
 
 @pytest.fixture
 def project(db, user):
-    project = Project.objects.create(name='Test Project', owner=user)
+    project = Project.objects.create(name='Test Project', user=user)
     ProjectMember.objects.create(project=project, user=user, role='owner')
     return project
 

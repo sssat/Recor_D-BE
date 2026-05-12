@@ -27,7 +27,7 @@ def other_user(db):
 
 @pytest.fixture
 def project(db, user):
-    return Project.objects.create(name='포트폴리오 관리 시스템', owner=user, tags=['React', 'DRF'])
+    return Project.objects.create(name='포트폴리오 관리 시스템', user=user, tags=['React', 'DRF'])
 
 
 @pytest.fixture
@@ -99,7 +99,7 @@ class TestPortfolio:
         assert resp.data['action'] == ['권한 검증을 추가했습니다.', '테스트를 작성했습니다.']
 
     def test_cannot_use_other_user_project(self, client, user, other_user):
-        other_project = Project.objects.create(name='타인 프로젝트', owner=other_user)
+        other_project = Project.objects.create(name='타인 프로젝트', user=other_user)
         client.force_authenticate(user=user)
 
         resp = client.post(reverse('portfolio-list'), {
