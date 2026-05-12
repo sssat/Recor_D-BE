@@ -2,7 +2,7 @@ from .models import Project, ProjectMember
 
 
 def create_project(validated_data: dict, user) -> Project:
-    project = Project.objects.create(owner=user, **validated_data)
+    project = Project.objects.create(user=user, **validated_data)
     ProjectMember.objects.create(project=project, user=user, role='owner')
     return project
 

@@ -99,7 +99,7 @@ def build_portfolio_draft_from_project(project):
 
 @transaction.atomic
 def generate_portfolio_for_project(user, project_id):
-    project = get_object_or_404(Project, id=project_id, owner=user)
+    project = get_object_or_404(Project, id=project_id, user=user)
     draft = build_portfolio_draft_from_project(project)
 
     portfolio = Portfolio.objects.create(

@@ -121,7 +121,7 @@ class PortfolioSerializer(serializers.ModelSerializer):
         if project_id is None:
             return attrs
         user = self.context['request'].user
-        if not Project.objects.filter(id=project_id, owner=user).exists():
+        if not Project.objects.filter(id=project_id, user=user).exists():
             raise serializers.ValidationError({'projectId': '접근할 수 없는 프로젝트입니다.'})
         return attrs
 

@@ -17,7 +17,7 @@ class ProjectMemberSerializer(serializers.ModelSerializer):
 
 
 class ProjectSerializer(serializers.ModelSerializer):
-    owner = UserSerializer(read_only=True)
+    user = UserSerializer(read_only=True)
     startDate = serializers.DateField(source='start_date', allow_null=True, required=False)
     endDate = serializers.DateField(source='end_date', allow_null=True, required=False)
     colorKey = serializers.ChoiceField(source='color', choices=[c[0] for c in Project.COLOR_CHOICES])
@@ -33,13 +33,13 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = (
-            'id', 'name', 'description', 'owner',
+            'id', 'name', 'description', 'user',
             'startDate', 'endDate', 'status', 'tags', 'colorKey',
             'meetingCount', 'todoCount', 'completedTodoCount', 'progress',
             'meetingIds', 'todoIds', 'scheduleIds',
             'createdAt',
         )
-        read_only_fields = ('id', 'owner', 'createdAt')
+        read_only_fields = ('id', 'user', 'createdAt')
 
     @extend_schema_field(serializers.IntegerField())
     def get_meetingCount(self, obj):
