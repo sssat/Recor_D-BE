@@ -120,3 +120,24 @@ class TestProfile:
     def test_unauthenticated_cannot_access_profile(self, client):
         resp = client.get(reverse('profile'))
         assert resp.status_code == 401
+
+
+@pytest.mark.django_db
+class TestWithdraw:
+    def test_withdraw_deletes_user(self, client, user):
+        from rest_framework_simplejwt.tokens import RefreshToken as RT
+        refresh = str(RT.for_user(user))
+        client.force_authenticate(user=user)
+        resp = client.delete(reverse('withdraw'), {'refresh': refresh})
+        assert resp.status_code == 204
+        assert not User.objects.filter(pk=user.pk).exists()
+
+    def test_withdraw_without_refresh_token(self, client, user):
+        client.force_authenticate(user=user)
+        resp = client.delete(reverse('withdraw'), {})
+        assert resp.status_code == 204
+        assert not User.objects.filter(pk=user.pk).exists()
+
+    def test_unauthenticated_cannot_withdraw(self, client):
+        resp = client.delete(reverse('withdraw'))
+        assert resp.status_code == 401

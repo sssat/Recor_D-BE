@@ -98,3 +98,33 @@ class ProfileView(APIView):
         serializer.is_valid(raise_exception=True)
         serializer.save()
         return Response(serializer.data)
+
+
+class WithdrawView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        tags=['Auth'],
+        summary='회원 탈퇴',
+        description=(
+            '계정과 모든 데이터를 삭제합니다.\n\n'
+            '`refresh` 토큰을 함께 보내면 블랙리스트 처리 후 삭제합니다.'
+        ),
+        request=inline_serializer(
+            name='WithdrawRequest',
+            fields={'refresh': serializers.CharField(help_text='리프레시 토큰', required=False)},
+        ),
+        responses={
+            204: OpenApiResponse(description='탈퇴 성공'),
+        },
+    )
+    def delete(self, request):
+        refresh_token = request.data.get('refresh')
+        if refresh_token:
+            try:
+                RefreshToken(refresh_token).blacklist()
+            except TokenError:
+                pass
+
+        request.user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
