@@ -1,9 +1,5 @@
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
-<<<<<<< Updated upstream
-from drf_spectacular.utils import extend_schema_field
-=======
->>>>>>> Stashed changes
 
 from apps.projects.models import Project
 from .models import Portfolio, StarEntry
@@ -51,10 +47,7 @@ class StarEntrySerializer(serializers.ModelSerializer):
 
 
 class PortfolioSerializer(serializers.ModelSerializer):
-<<<<<<< Updated upstream
-=======
     description = serializers.CharField(read_only=True)
->>>>>>> Stashed changes
     projectId = serializers.IntegerField(source='project_id', allow_null=True, required=False)
     project = serializers.CharField(source='project.name', read_only=True)
     summary = serializers.CharField(source='description', allow_blank=True, required=False)
@@ -82,22 +75,13 @@ class PortfolioSerializer(serializers.ModelSerializer):
         model = Portfolio
         fields = (
             'id', 'project', 'projectId', 'title', 'description', 'summary',
-<<<<<<< Updated upstream
-            'keywords', 'githubUrl', 'deployUrl', 'thumbnailUrl',
-            'isPublic', 'situation', 'task', 'action', 'result',
-=======
             'keywords', 'githubUrl', 'deployUrl', 'thumbnailUrl', 'isPublic',
             'situation', 'task', 'action', 'result',
->>>>>>> Stashed changes
             'aiSummary', 'isSummarized', 'summarizedAt',
             'starEntries', 'createdAt', 'updatedAt',
         )
         read_only_fields = (
-<<<<<<< Updated upstream
-            'id', 'project', 'starEntries', 'createdAt', 'updatedAt',
-=======
             'id', 'project', 'description', 'starEntries', 'createdAt', 'updatedAt',
->>>>>>> Stashed changes
             'aiSummary', 'isSummarized', 'summarizedAt',
         )
 
@@ -122,13 +106,10 @@ class PortfolioSerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, data):
         data = data.copy()
-<<<<<<< Updated upstream
-=======
         if 'summary' not in data and 'description' in data:
             data['summary'] = data.get('description')
         if 'keywords' not in data and 'tech_stack' in data:
             data['keywords'] = data.get('tech_stack')
->>>>>>> Stashed changes
         if isinstance(data.get('keywords'), str):
             data['keywords'] = [
                 item.strip() for item in data['keywords'].split(',') if item.strip()
@@ -145,13 +126,12 @@ class PortfolioSerializer(serializers.ModelSerializer):
         project_id = attrs.get('project_id')
         if project_id is None:
             return attrs
+
         user = self.context['request'].user
-<<<<<<< Updated upstream
         if not Project.objects.filter(id=project_id, user=user).exists():
-=======
-        if not Project.objects.filter(id=project_id, owner=user).exists():
->>>>>>> Stashed changes
-            raise serializers.ValidationError({'projectId': '접근할 수 없는 프로젝트입니다.'})
+            raise serializers.ValidationError({
+                'projectId': 'Project not found or not available to this user.',
+            })
         return attrs
 
     def to_representation(self, instance):
@@ -172,14 +152,28 @@ class PortfolioSerializer(serializers.ModelSerializer):
             star_fields['action'] = _join_action_items(star_fields['action'])
         return star_fields
 
+    def _build_star_entry_data(self, star_data):
+        entry_data = {
+            'situation': '',
+            'task': '',
+            'action': '',
+            'result': '',
+        }
+        entry_data.update(star_data)
+        return entry_data
+
     def create(self, validated_data):
         star_data = self._pop_star_data(validated_data)
         validated_data['user'] = self.context['request'].user
         if not validated_data.get('description') and star_data.get('situation'):
             validated_data['description'] = star_data['situation'][:120]
+
         portfolio = super().create(validated_data)
         if star_data:
-            StarEntry.objects.create(portfolio=portfolio, **star_data)
+            StarEntry.objects.create(
+                portfolio=portfolio,
+                **self._build_star_entry_data(star_data),
+            )
         return portfolio
 
     def update(self, instance, validated_data):
@@ -188,7 +182,10 @@ class PortfolioSerializer(serializers.ModelSerializer):
         if star_data:
             entry = portfolio.star_entries.order_by('id').first()
             if entry is None:
-                StarEntry.objects.create(portfolio=portfolio, **star_data)
+                StarEntry.objects.create(
+                    portfolio=portfolio,
+                    **self._build_star_entry_data(star_data),
+                )
             else:
                 for field, value in star_data.items():
                     setattr(entry, field, value)
