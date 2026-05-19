@@ -47,7 +47,7 @@ class TestKakaoLogin:
 
         assert resp.status_code == 200
         assert resp.data['user']['email'] == 'kakao@example.com'
-        assert resp.data['is_new_user'] is True
+        assert resp.data['isNewUser'] is True
         assert 'access' in resp.data
 
     def test_login_without_email(self, client):

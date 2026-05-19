@@ -8,12 +8,13 @@ from .services import create_project, sync_related_items
 
 class ProjectMemberSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
-    user_id = serializers.IntegerField(write_only=True)
+    userId = serializers.IntegerField(source='user_id', write_only=True)
+    createdAt = serializers.DateTimeField(source='created_at', read_only=True)
 
     class Meta:
         model = ProjectMember
-        fields = ('id', 'user', 'user_id', 'role', 'created_at')
-        read_only_fields = ('id', 'created_at')
+        fields = ('id', 'user', 'userId', 'role', 'createdAt')
+        read_only_fields = ('id', 'createdAt')
 
 
 class ProjectSerializer(serializers.ModelSerializer):

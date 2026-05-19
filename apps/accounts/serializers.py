@@ -3,10 +3,12 @@ from .models import User
 
 
 class UserSerializer(serializers.ModelSerializer):
+    dateJoined = serializers.DateTimeField(source='date_joined', read_only=True)
+
     class Meta:
         model = User
-        fields = ('id', 'email', 'name', 'date_joined')
-        read_only_fields = ('id', 'email', 'date_joined')
+        fields = ('id', 'email', 'name', 'dateJoined')
+        read_only_fields = ('id', 'email', 'dateJoined')
 
 
 class KakaoLoginSerializer(serializers.Serializer):
@@ -22,4 +24,4 @@ class SocialLoginResponseSerializer(serializers.Serializer):
     user = UserSerializer()
     access = serializers.CharField(help_text='JWT 액세스 토큰 (24시간 유효)')
     refresh = serializers.CharField(help_text='JWT 리프레시 토큰 (30일 유효)')
-    is_new_user = serializers.BooleanField(help_text='최초 가입 여부')
+    isNewUser = serializers.BooleanField(help_text='최초 가입 여부')

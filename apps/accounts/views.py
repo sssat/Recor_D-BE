@@ -50,7 +50,7 @@ class KakaoLoginView(APIView):
             'user': UserSerializer(user).data,
             'access': str(refresh.access_token),
             'refresh': str(refresh),
-            'is_new_user': is_new,
+            'isNewUser': is_new,
         })
 
 
