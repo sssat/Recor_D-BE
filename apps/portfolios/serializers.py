@@ -1,5 +1,9 @@
-from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
+from rest_framework import serializers
+<<<<<<< Updated upstream
+from drf_spectacular.utils import extend_schema_field
+=======
+>>>>>>> Stashed changes
 
 from apps.projects.models import Project
 from .models import Portfolio, StarEntry
@@ -47,6 +51,10 @@ class StarEntrySerializer(serializers.ModelSerializer):
 
 
 class PortfolioSerializer(serializers.ModelSerializer):
+<<<<<<< Updated upstream
+=======
+    description = serializers.CharField(read_only=True)
+>>>>>>> Stashed changes
     projectId = serializers.IntegerField(source='project_id', allow_null=True, required=False)
     project = serializers.CharField(source='project.name', read_only=True)
     summary = serializers.CharField(source='description', allow_blank=True, required=False)
@@ -74,13 +82,22 @@ class PortfolioSerializer(serializers.ModelSerializer):
         model = Portfolio
         fields = (
             'id', 'project', 'projectId', 'title', 'description', 'summary',
+<<<<<<< Updated upstream
             'keywords', 'githubUrl', 'deployUrl', 'thumbnailUrl',
             'isPublic', 'situation', 'task', 'action', 'result',
+=======
+            'keywords', 'githubUrl', 'deployUrl', 'thumbnailUrl', 'isPublic',
+            'situation', 'task', 'action', 'result',
+>>>>>>> Stashed changes
             'aiSummary', 'isSummarized', 'summarizedAt',
             'starEntries', 'createdAt', 'updatedAt',
         )
         read_only_fields = (
+<<<<<<< Updated upstream
             'id', 'project', 'starEntries', 'createdAt', 'updatedAt',
+=======
+            'id', 'project', 'description', 'starEntries', 'createdAt', 'updatedAt',
+>>>>>>> Stashed changes
             'aiSummary', 'isSummarized', 'summarizedAt',
         )
 
@@ -105,6 +122,13 @@ class PortfolioSerializer(serializers.ModelSerializer):
 
     def to_internal_value(self, data):
         data = data.copy()
+<<<<<<< Updated upstream
+=======
+        if 'summary' not in data and 'description' in data:
+            data['summary'] = data.get('description')
+        if 'keywords' not in data and 'tech_stack' in data:
+            data['keywords'] = data.get('tech_stack')
+>>>>>>> Stashed changes
         if isinstance(data.get('keywords'), str):
             data['keywords'] = [
                 item.strip() for item in data['keywords'].split(',') if item.strip()
@@ -122,7 +146,11 @@ class PortfolioSerializer(serializers.ModelSerializer):
         if project_id is None:
             return attrs
         user = self.context['request'].user
+<<<<<<< Updated upstream
         if not Project.objects.filter(id=project_id, user=user).exists():
+=======
+        if not Project.objects.filter(id=project_id, owner=user).exists():
+>>>>>>> Stashed changes
             raise serializers.ValidationError({'projectId': '접근할 수 없는 프로젝트입니다.'})
         return attrs
 

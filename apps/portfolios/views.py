@@ -1,7 +1,11 @@
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema, extend_schema_view
+<<<<<<< Updated upstream
 from rest_framework import generics, serializers, status
+=======
+from rest_framework import generics
+>>>>>>> Stashed changes
 from rest_framework.filters import OrderingFilter
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -14,10 +18,13 @@ from .services import generate_portfolio_for_project, summarize_star_entry
 PORTFOLIOS_TAG = ['portfolios']
 
 
+<<<<<<< Updated upstream
 class PortfolioGenerateSerializer(serializers.Serializer):
     projectId = serializers.IntegerField()
 
 
+=======
+>>>>>>> Stashed changes
 @extend_schema_view(
     get=extend_schema(tags=PORTFOLIOS_TAG),
     post=extend_schema(tags=PORTFOLIOS_TAG),
@@ -29,7 +36,18 @@ class PortfolioListCreateView(generics.ListCreateAPIView):
     ordering = ['-created_at']
 
     def get_queryset(self):
+<<<<<<< Updated upstream
         qs = Portfolio.objects.filter(user=self.request.user).select_related('project').prefetch_related('star_entries')
+=======
+        if getattr(self, 'swagger_fake_view', False):
+            return Portfolio.objects.none()
+
+        qs = (
+            Portfolio.objects.filter(user=self.request.user)
+            .select_related('project')
+            .prefetch_related('star_entries')
+        )
+>>>>>>> Stashed changes
         project = self.request.query_params.get('project') or self.request.query_params.get('projectId')
         query = self.request.query_params.get('q') or self.request.query_params.get('search')
 
@@ -63,7 +81,18 @@ class PortfolioDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = PortfolioSerializer
 
     def get_queryset(self):
+<<<<<<< Updated upstream
         return Portfolio.objects.filter(user=self.request.user).select_related('project').prefetch_related('star_entries')
+=======
+        if getattr(self, 'swagger_fake_view', False):
+            return Portfolio.objects.none()
+
+        return (
+            Portfolio.objects.filter(user=self.request.user)
+            .select_related('project')
+            .prefetch_related('star_entries')
+        )
+>>>>>>> Stashed changes
 
 
 @extend_schema_view(
@@ -75,10 +104,17 @@ class StarEntryListCreateView(generics.ListCreateAPIView):
 
     def get_portfolio(self):
         if not hasattr(self, '_portfolio'):
-            self._portfolio = get_object_or_404(Portfolio, id=self.kwargs['portfolio_id'], user=self.request.user)
+            self._portfolio = get_object_or_404(
+                Portfolio,
+                id=self.kwargs['portfolio_id'],
+                user=self.request.user,
+            )
         return self._portfolio
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return StarEntry.objects.none()
+
         return StarEntry.objects.filter(portfolio=self.get_portfolio())
 
     def perform_create(self, serializer):
@@ -95,6 +131,9 @@ class StarEntryDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = StarEntrySerializer
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return StarEntry.objects.none()
+
         return StarEntry.objects.filter(portfolio__user=self.request.user)
 
 
@@ -103,7 +142,12 @@ class StarEntrySummarizeView(APIView):
 
     @extend_schema(tags=PORTFOLIOS_TAG, request=None, responses=StarEntrySerializer)
     def post(self, request, portfolio_id, pk):
-        entry = get_object_or_404(StarEntry, id=pk, portfolio_id=portfolio_id, portfolio__user=request.user)
+        entry = get_object_or_404(
+            StarEntry,
+            id=pk,
+            portfolio_id=portfolio_id,
+            portfolio__user=request.user,
+        )
         entry = summarize_star_entry(entry)
         return Response(StarEntrySerializer(entry).data)
 
