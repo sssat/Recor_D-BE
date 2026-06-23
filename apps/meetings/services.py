@@ -8,10 +8,6 @@ MAX_AUDIO_FILE_SIZE = 50 * 1024 * 1024
 SUPPORTED_AUDIO_EXTENSIONS = {'mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm'}
 
 
-def _debug(message):
-    print(f'[meeting-audio] {message}', flush=True)
-
-
 def summarize_meeting(meeting: Meeting) -> Meeting:
     content = meeting.transcript or meeting.summary
     summary = summarize_meeting_note(content)
@@ -27,9 +23,9 @@ def summarize_meeting(meeting: Meeting) -> Meeting:
 def validate_audio_file(file):
     extension = file.name.rsplit('.', 1)[-1].lower() if '.' in file.name else ''
     if extension not in SUPPORTED_AUDIO_EXTENSIONS:
-        raise ValueError('Only MP3, MP4, MPEG, MPGA, M4A, WAV, and WEBM files are supported.')
+        raise ValueError('MP3, MP4, MPEG, MPGA, M4A, WAV, WEBM 파일만 업로드할 수 있습니다.')
     if file.size > MAX_AUDIO_FILE_SIZE:
-        raise ValueError('The audio file is larger than 50MB.')
+        raise ValueError('파일 용량은 50MB를 초과할 수 없습니다.')
 
 
 def _parse_summary_sections(summary_text):
@@ -72,21 +68,15 @@ def _build_fallback_summary(transcript):
 
 
 def build_meeting_draft_from_audio(file, project=''):
-    _debug(f'received file name={file.name} size={getattr(file, "size", "unknown")}')
     validate_audio_file(file)
 
-    _debug('transcription start')
     transcript = transcribe_audio_file(file)
-    _debug(f'transcription done chars={len(transcript or "")}')
 
     ai_summary = ''
     if transcript:
         try:
-            _debug('summary start')
             ai_summary = summarize_meeting_note(transcript)
-            _debug(f'summary done chars={len(ai_summary or "")}')
-        except Exception as exc:
-            _debug(f'summary failed: {type(exc).__name__}: {exc}')
+        except Exception:
             ai_summary = _build_fallback_summary(transcript)
 
     key_points, action_items = _parse_summary_sections(ai_summary)
@@ -94,7 +84,7 @@ def build_meeting_draft_from_audio(file, project=''):
         key_points = [_build_fallback_summary(transcript)]
 
     cleaned_name = file.name.rsplit('.', 1)[0].replace('-', ' ').replace('_', ' ').strip()
-    title = f'{cleaned_name} meeting' if cleaned_name else 'New meeting note'
+    title = f'{cleaned_name} 회의' if cleaned_name else '새 회의록'
     selected_project = project.strip() if project else ''
 
     return {
@@ -104,7 +94,7 @@ def build_meeting_draft_from_audio(file, project=''):
         'durationMinutes': 0,
         'participants': [],
         'summary': ai_summary,
-        'tags': ['AI summary', 'upload'],
+        'tags': ['AI 요약', '업로드'],
         'transcript': transcript,
         'keyPoints': key_points,
         'actionItems': action_items,

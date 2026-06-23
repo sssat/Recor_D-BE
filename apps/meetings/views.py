@@ -102,15 +102,7 @@ class MeetingDraftFromAudioView(APIView):
             return []
         return super().get_permissions()
 
-    def dispatch(self, request, *args, **kwargs):
-        print(
-            f'[meeting-audio] dispatch method={request.method} path={request.path}',
-            flush=True,
-        )
-        return super().dispatch(request, *args, **kwargs)
-
     def post(self, request):
-        print('[meeting-audio] request received', flush=True)
         serializer = MeetingDraftUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -120,10 +112,8 @@ class MeetingDraftFromAudioView(APIView):
                 serializer.validated_data.get('project', ''),
             )
         except ValueError as exc:
-            print(f'[meeting-audio] validation failed: {exc}', flush=True)
             return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         except Exception as exc:
-            print(f'[meeting-audio] failed: {type(exc).__name__}: {exc}', flush=True)
             payload = {'error': 'Failed to process the audio file.'}
 
             if settings.DEBUG:
@@ -131,7 +121,6 @@ class MeetingDraftFromAudioView(APIView):
 
             return Response(payload, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-        print('[meeting-audio] request finished', flush=True)
         return Response(draft)
 
 
