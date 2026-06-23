@@ -1,4 +1,5 @@
 import requests as http_requests
+from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status, serializers
@@ -7,7 +8,11 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from drf_spectacular.utils import extend_schema, OpenApiResponse, inline_serializer
 
-from .serializers import KakaoLoginSerializer, SocialLoginResponseSerializer, UserSerializer
+from .serializers import (
+    KakaoLoginSerializer,
+    SocialLoginResponseSerializer,
+    UserSerializer,
+)
 from .services import kakao_login
 
 
@@ -16,21 +21,12 @@ class KakaoLoginView(APIView):
 
     @extend_schema(
         tags=['Auth'],
-        summary='카카오 로그인',
-        description=(
-            '카카오 인가코드를 받아 JWT를 발급합니다.\n\n'
-            '**흐름**\n'
-            '1. 프론트에서 Kakao SDK로 인가코드 수령\n'
-            '2. 인가코드 + redirect_uri를 이 API에 전달\n'
-            '3. 서버에서 카카오 토큰 교환 → 사용자 정보 조회 → JWT 반환\n\n'
-            '**JWT 유효기간**\n'
-            '- access: 24시간\n'
-            '- refresh: 30일'
-        ),
+        summary='Kakao login',
+        description='Exchange a Kakao authorization code for local JWT tokens.',
         request=KakaoLoginSerializer,
         responses={
             200: SocialLoginResponseSerializer,
-            400: OpenApiResponse(description='인가코드 검증 실패'),
+            400: OpenApiResponse(description='Kakao authorization failed'),
         },
     )
     def post(self, request):
@@ -42,8 +38,17 @@ class KakaoLoginView(APIView):
                 code=serializer.validated_data['code'],
                 redirect_uri=serializer.validated_data.get('redirect_uri', ''),
             )
-        except http_requests.RequestException:
-            return Response({'error': '카카오 로그인에 실패했습니다.'}, status=status.HTTP_400_BAD_REQUEST)
+        except http_requests.RequestException as exc:
+            payload = {'error': 'Kakao login failed.'}
+
+            if settings.DEBUG:
+                payload['detail'] = str(exc)
+
+                if exc.response is not None:
+                    payload['detail'] = exc.response.text
+                    payload['status_code'] = exc.response.status_code
+
+            return Response(payload, status=status.HTTP_400_BAD_REQUEST)
 
         refresh = RefreshToken.for_user(user)
         return Response({
@@ -57,39 +62,45 @@ class KakaoLoginView(APIView):
 class LogoutView(APIView):
     @extend_schema(
         tags=['Auth'],
-        summary='로그아웃',
-        description='리프레시 토큰을 블랙리스트에 추가합니다.',
+        summary='Logout',
+        description='Blacklist the submitted refresh token.',
         request=inline_serializer(
             name='LogoutRequest',
-            fields={'refresh': serializers.CharField(help_text='리프레시 토큰')},
+            fields={'refresh': serializers.CharField(help_text='Refresh token')},
         ),
         responses={
-            204: OpenApiResponse(description='로그아웃 성공'),
-            400: OpenApiResponse(description='리프레시 토큰 누락 또는 유효하지 않음'),
+            204: OpenApiResponse(description='Logged out'),
+            400: OpenApiResponse(description='Missing or invalid refresh token'),
         },
     )
     def post(self, request):
         refresh_token = request.data.get('refresh')
         if not refresh_token:
-            return Response({'error': '리프레시 토큰이 필요합니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'error': 'Refresh token is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         try:
             RefreshToken(refresh_token).blacklist()
         except TokenError:
-            return Response({'error': '유효하지 않은 토큰입니다.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'error': 'Invalid token.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
-    @extend_schema(tags=['Auth'], summary='내 프로필 조회', responses={200: UserSerializer})
+    @extend_schema(tags=['Auth'], summary='Get profile', responses={200: UserSerializer})
     def get(self, request):
         return Response(UserSerializer(request.user).data)
 
     @extend_schema(
         tags=['Auth'],
-        summary='내 프로필 수정',
-        description='`name` 수정 가능.',
+        summary='Update profile',
+        description='Update the current user profile.',
         request=UserSerializer,
         responses={200: UserSerializer},
     )
@@ -105,17 +116,19 @@ class WithdrawView(APIView):
 
     @extend_schema(
         tags=['Auth'],
-        summary='회원 탈퇴',
-        description=(
-            '계정과 모든 데이터를 삭제합니다.\n\n'
-            '`refresh` 토큰을 함께 보내면 블랙리스트 처리 후 삭제합니다.'
-        ),
+        summary='Withdraw account',
+        description='Delete the current user account and related data.',
         request=inline_serializer(
             name='WithdrawRequest',
-            fields={'refresh': serializers.CharField(help_text='리프레시 토큰', required=False)},
+            fields={
+                'refresh': serializers.CharField(
+                    help_text='Refresh token',
+                    required=False,
+                )
+            },
         ),
         responses={
-            204: OpenApiResponse(description='탈퇴 성공'),
+            204: OpenApiResponse(description='Account deleted'),
         },
     )
     def delete(self, request):

@@ -12,16 +12,16 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class KakaoLoginSerializer(serializers.Serializer):
-    code = serializers.CharField(help_text='카카오 인가코드')
+    code = serializers.CharField(help_text='Kakao authorization code')
     redirect_uri = serializers.CharField(
         required=False,
         default='',
-        help_text='카카오 인가코드 발급 시 사용한 redirect_uri',
+        help_text='Redirect URI used to issue the Kakao authorization code',
     )
 
 
 class SocialLoginResponseSerializer(serializers.Serializer):
     user = UserSerializer()
-    access = serializers.CharField(help_text='JWT 액세스 토큰 (24시간 유효)')
-    refresh = serializers.CharField(help_text='JWT 리프레시 토큰 (30일 유효)')
-    isNewUser = serializers.BooleanField(help_text='최초 가입 여부')
+    access = serializers.CharField(help_text='JWT access token')
+    refresh = serializers.CharField(help_text='JWT refresh token')
+    isNewUser = serializers.BooleanField(help_text='Whether this is a new user')

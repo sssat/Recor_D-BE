@@ -8,6 +8,10 @@ MAX_AUDIO_FILE_SIZE = 50 * 1024 * 1024
 SUPPORTED_AUDIO_EXTENSIONS = {'mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm'}
 
 
+def _debug(message):
+    print(f'[meeting-audio] {message}', flush=True)
+
+
 def summarize_meeting(meeting: Meeting) -> Meeting:
     content = meeting.transcript or meeting.summary
     summary = summarize_meeting_note(content)
@@ -23,9 +27,9 @@ def summarize_meeting(meeting: Meeting) -> Meeting:
 def validate_audio_file(file):
     extension = file.name.rsplit('.', 1)[-1].lower() if '.' in file.name else ''
     if extension not in SUPPORTED_AUDIO_EXTENSIONS:
-        raise ValueError('MP3, MP4, MPEG, MPGA, M4A, WAV, WEBM 파일만 업로드할 수 있습니다.')
+        raise ValueError('Only MP3, MP4, MPEG, MPGA, M4A, WAV, and WEBM files are supported.')
     if file.size > MAX_AUDIO_FILE_SIZE:
-        raise ValueError('파일 용량은 25MB를 초과할 수 없습니다.')
+        raise ValueError('The audio file is larger than 50MB.')
 
 
 def _parse_summary_sections(summary_text):
@@ -37,12 +41,16 @@ def _parse_summary_sections(summary_text):
         line = raw_line.strip()
         if not line:
             continue
-        if '주요 결정' in line or '핵심' in line or '중요' in line:
+
+        lower_line = line.lower()
+        if any(keyword in lower_line for keyword in ('summary', 'key point', 'decision')):
             current_section = 'key_points'
             continue
-        if '액션' in line or '할 일' in line or '해야 할' in line:
+
+        if any(keyword in lower_line for keyword in ('action', 'todo', 'checklist')):
             current_section = 'action_items'
             continue
+
         if line.startswith(('-', '*', '•')):
             item = line.lstrip('-*•').strip()
             if current_section == 'action_items':
@@ -56,13 +64,37 @@ def _parse_summary_sections(summary_text):
     return key_points, action_items
 
 
+def _build_fallback_summary(transcript):
+    cleaned_transcript = ' '.join((transcript or '').split())
+    if not cleaned_transcript:
+        return ''
+    return cleaned_transcript[:500]
+
+
 def build_meeting_draft_from_audio(file, project=''):
+    _debug(f'received file name={file.name} size={getattr(file, "size", "unknown")}')
     validate_audio_file(file)
+
+    _debug('transcription start')
     transcript = transcribe_audio_file(file)
-    ai_summary = summarize_meeting_note(transcript) if transcript else ''
+    _debug(f'transcription done chars={len(transcript or "")}')
+
+    ai_summary = ''
+    if transcript:
+        try:
+            _debug('summary start')
+            ai_summary = summarize_meeting_note(transcript)
+            _debug(f'summary done chars={len(ai_summary or "")}')
+        except Exception as exc:
+            _debug(f'summary failed: {type(exc).__name__}: {exc}')
+            ai_summary = _build_fallback_summary(transcript)
+
     key_points, action_items = _parse_summary_sections(ai_summary)
+    if transcript and not key_points:
+        key_points = [_build_fallback_summary(transcript)]
+
     cleaned_name = file.name.rsplit('.', 1)[0].replace('-', ' ').replace('_', ' ').strip()
-    title = f'{cleaned_name} 회의' if cleaned_name else '새 회의록'
+    title = f'{cleaned_name} meeting' if cleaned_name else 'New meeting note'
     selected_project = project.strip() if project else ''
 
     return {
@@ -72,7 +104,7 @@ def build_meeting_draft_from_audio(file, project=''):
         'durationMinutes': 0,
         'participants': [],
         'summary': ai_summary,
-        'tags': ['AI요약', '업로드'],
+        'tags': ['AI summary', 'upload'],
         'transcript': transcript,
         'keyPoints': key_points,
         'actionItems': action_items,
